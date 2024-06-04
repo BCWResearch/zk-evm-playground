@@ -1,0 +1,30 @@
+{
+  "name": "zk-evm-playground",
+  "version": "1.0.0",
+  "description": "A set of tools and scripts for zk-evm systems",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "map:data": "nodemon run operations/map.rpc.data.js",
+    "accounts": "nodemon run operations/get.accounts.js",
+    "chain": "nodemon run operations/get.chain.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BCWResearch/zk-evm-playground.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BCWResearch/zk-evm-playground/issues"
+  },
+  "homepage": "https://github.com/BCWResearch/zk-evm-playground#readme",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "node-libcurl": "^4.0.0",
+    "nodemon": "^3.1.2",
+    "solc": "^0.8.26",
+    "web3": "^4.9.0"
+  }
+}
