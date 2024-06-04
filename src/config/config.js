@@ -20,7 +20,9 @@ const config = {
             "0x9e8440ba13d11728e6646376e2b72041e0c05df080932f50b3c248b1f663c4c3"
         ]
     },
+    nakedRpc: {
+        rpcProvider: 'http://35.208.68.173:8454'
+    }
 };
-
 
  module.exports = config;

@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { Web3 } = require('web3');
 const config = require('../config/config');
-const web3 = new Web3(config.imxConfig.rpcProvider);
+const web3 = new Web3(config.nakedRpc.rpcProvider);
 const axios = require('axios');
 
 class EthHandler {
@@ -10,6 +10,12 @@ class EthHandler {
         const chain  = await web3.eth.getChainId();
         console.log(`Chain retrieved Mainnet : ${chain}`);
         return chain;
+    }
+
+    getActiveAccounts = async() => {
+        const accounts = await web3.eth.getAccounts();
+        console.log(`accounts`);
+        return accounts;
     }
 
     getBlock = async(number) => {

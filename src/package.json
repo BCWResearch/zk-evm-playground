@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "map:data": "nodemon run operations/map.rpc.data.js",
+    "set:eoa:transfer": "nodemon run operations/set.eoa.transfers.js",
     "accounts": "nodemon run operations/get.accounts.js",
     "chain": "nodemon run operations/get.chain.js"
   },
