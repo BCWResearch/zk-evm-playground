@@ -3,8 +3,10 @@ const ethHandler = require("../services/eth.handler");
 const { Web3 } = require('web3');
 const web3 = new Web3(config.internalImxConfig.rpcProvider);
 const txRecord = [];
+const { makeBatchRequest } = require('web3-batch-request');
 
-async function writeEOATransfer () {
+
+async function buildEOATransfer () {
 
     const pvKey = config.internalImxConfig.defaultAccount.privateKey;
     const pvKeyAddress = await web3.eth.accounts.privateKeyToAccount(pvKey).address;
@@ -16,23 +18,24 @@ async function writeEOATransfer () {
     console.log(`Balance origin ${pvKeyAddress} : ${web3.utils.fromWei(balancePv, "ether")}`);
     console.log(`Balance dest ${destination} : ${web3.utils.fromWei(balanceDest, "ether")}`);
 
-    const receipt = await ethHandler.writeEOATransfer(pvKey, 0.1, destination);
-    const object = {
+    const fullTransaction = await ethHandler.createEOATransfer(pvKey, 0.1, destination);
+  /*  const object = {
         blockHash: receipt.blockHash,
         blockNumber: receipt.blockNumber,
         txHash: receipt.transactionHash
-    };
-    txRecord.push(object);
-    return object;
+    }; */
+    
+    return fullTransaction;
 }
 
 async function populateWithEOATransfer(numberOfTxsToWrite) {
     for(let i=0; i< numberOfTxsToWrite; i++) {
-       const receipt = await writeEOATransfer();
+       const originalTx = await buildEOATransfer();
+       txRecord.push(originalTx);
     }
 
-    console.log(`EOA Transfer TxRecord`);
-    console.log(txRecord);
+    // How do you batch write this one?
+    await ethHandler.writeTransaction(txRecord[0].rawTransaction);    
 }
 
 populateWithEOATransfer(5);
