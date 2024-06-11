@@ -1,5 +1,5 @@
 const config = {
-    imxConfig : {
+    externalImxConfig : {
         rpcProvider:`http://35.208.84.178:8545`,
         accounts:
          [
@@ -20,7 +20,21 @@ const config = {
             "0x9e8440ba13d11728e6646376e2b72041e0c05df080932f50b3c248b1f663c4c3"
         ]
     },
+    internalImxConfig: {
+        rpcProvider: 'http://35.208.68.173:8545',
+        defaultAccount: {
+            mnemonic: 'code code code code code code code code code code code quality',
+            privateKey: '0x42b6e34dc21598a807dc19d7784c71b2a7a01f6480dc6f58258f78e539f1a1fa',
+            publicAddress: '0x85da99c8a7c2c95964c8efd687e95e632fc533d6'
+        },
+        accountDummy: {
+            privateKey: '0xb1bfcac96257b3392356f3f7dae2f041c539fe2692bbfa6d9da737d867094246',
+            publicAddress: '0xfa2BC769A61359fCFF98FC1B2168A9E9561a7534',
+        },
+        validatorContract: {
+            address: '0x4242424242424242424242424242424242424242'
+        }
+    }
 };
-
 
  module.exports = config;
