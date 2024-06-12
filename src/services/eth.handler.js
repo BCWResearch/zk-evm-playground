@@ -58,7 +58,7 @@ class EthHandler {
         return mnemonicWallet.privateKey;
     }
 
-    writeEOATransfer = async (originPrivateKey, ethAmount, destination) => {
+    createEOATransfer = async (originPrivateKey, ethAmount, destination) => {
         console.log(`Attempting to send transaction from ${originPrivateKey} of Eth ${ethAmount} to ${destination}`);
         
         const pvKeyAddress = await web3.eth.accounts.privateKeyToAccount(originPrivateKey).address;
@@ -73,7 +73,16 @@ class EthHandler {
             },
             originPrivateKey
         );
-        const createReceipt = await web3.eth.sendSignedTransaction (createTransaction.rawTransaction);
+
+        return createTransaction;
+    }
+
+    sendTransactionRequest = async(rawTx) => {
+        return await web3.eth.sendSignedTransaction(rawTx, 'receipt', console.log);
+    }
+
+    writeTransaction = async(rawTx) => {
+        const createReceipt = await web3.eth.sendSignedTransaction(rawTx);
         console.log(createReceipt);
         console.log(`Transaction successful with hash: ${createReceipt.transactionHash}`);
         return createReceipt;
