@@ -1,23 +1,26 @@
-require('dotenv').config();
 const { Web3 } = require('web3');
 const config = require('../config/config');
 const web3 = new Web3(config.internalImxConfig.rpcProvider);
-
+const { ethers } = require('ethers');
 
 class EthHandler {
+    getEthersProvider = async() => {
+        return new ethers.providers.JsonRpcProvider(config.internalImxConfig.rpcProvider);
+    }
 
     getChainId = async ()  => {
         const chain  = await web3.eth.getChainId();
-        console.log(`Chain retrieved Mainnet : ${chain}`);
+        console.log(`Chain retrieved  : ${chain}`);
         return chain;
     }
 
+    getPrivateKey = async () => {
+        return await config.internalImxConfig.defaultAccount.privateKey;
+    }
+
     getDefaultAccountKey = async () => {
-        const account = await web3.eth.getAccountFromPrivateKey(config.internalImxConfig.defaultAccount.privateKey);
-        return {
-            account,
-            balance: await web3.eth.getBalance(account.accountAddress)
-        }
+        const account = await web3.eth.accounts.privateKeyToAccount(config.internalImxConfig.defaultAccount.privateKey);
+        return account;
     }
 
     getActiveAccounts = async() => {

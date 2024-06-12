@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "map:data": "nodemon run operations/map.rpc.data.js",
     "set:eoa:transfer": "nodemon run operations/set.eoa.transfers.js",
+    "deploy:token:contract": "nodemon run operations/deploy.contract.js",
     "chain": "nodemon run operations/get.chain.js"
   },
   "repository": {
@@ -23,7 +24,7 @@
     "amqplib": "^0.10.4",
     "axios": "^1.7.2",
     "dotenv": "^16.4.5",
-    "ethers": "^6.13.0",
+    "ethers": "^5.7.2",
     "forge-std": "^1.1.2",
     "node-libcurl": "^4.0.0",
     "nodemon": "^3.1.2",
