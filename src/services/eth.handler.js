@@ -77,8 +77,12 @@ class EthHandler {
         return createTransaction;
     }
 
+    sendTransactionRequest = async(rawTx) => {
+        return await web3.eth.sendSignedTransaction(rawTx, 'receipt', console.log);
+    }
+
     writeTransaction = async(rawTx) => {
-        const createReceipt = await web3.eth.sendSignedTransaction (rawTx);
+        const createReceipt = await web3.eth.sendSignedTransaction(rawTx);
         console.log(createReceipt);
         console.log(`Transaction successful with hash: ${createReceipt.transactionHash}`);
         return createReceipt;
