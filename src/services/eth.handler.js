@@ -4,12 +4,12 @@ const web3 = new Web3(config.internalImxConfig.rpcProvider);
 const { ethers } = require('ethers');
 
 class EthHandler {
-    getEthersProvider = async() => {
+    getEthersProvider = async () => {
         return new ethers.providers.JsonRpcProvider(config.internalImxConfig.rpcProvider);
     }
 
-    getChainId = async ()  => {
-        const chain  = await web3.eth.getChainId();
+    getChainId = async () => {
+        const chain = await web3.eth.getChainId();
         console.log(`Chain retrieved  : ${chain}`);
         return chain;
     }
@@ -23,13 +23,13 @@ class EthHandler {
         return account;
     }
 
-    getActiveAccounts = async() => {
+    getActiveAccounts = async () => {
         const accounts = await web3.eth.getAccounts();
         console.log(`Attempting to get accounts.. ${accounts[0]}`);
         return accounts;
     }
 
-    getBlockRange = async() => {
+    getBlockRange = async () => {
         const firstBlock = await web3.eth.getBlock(0);
         const lastBlock = await web3.eth.getBlock('latest');
 
@@ -39,7 +39,7 @@ class EthHandler {
         }
     }
 
-    getBlock = async(number) => {
+    getBlock = async (number) => {
         return await web3.eth.getBlock(number);
     }
 
@@ -61,10 +61,9 @@ class EthHandler {
         return mnemonicWallet.privateKey;
     }
 
-    createEOATransfer = async (originPrivateKey, ethAmount, destination) => {
-        console.log(`Attempting to send transaction from ${originPrivateKey} of Eth ${ethAmount} to ${destination}`);
-        
+    createEOATransfer = async (originPrivateKey, ethAmount, destination, nonce) => {
         const pvKeyAddress = await web3.eth.accounts.privateKeyToAccount(originPrivateKey).address;
+        console.log(`Creating signed transaction from ${pvKeyAddress} to ${destination} with nonce ${nonce}`);
         const createTransaction = await web3.eth.accounts.signTransaction(
             {
                 from: pvKeyAddress,
@@ -72,7 +71,8 @@ class EthHandler {
                 value: web3.utils.toWei(ethAmount, 'ether'),
                 gas: 21000,
                 maxFeePerGas: 21000,
-                maxPriorityFeePerGas: 21000
+                maxPriorityFeePerGas: 21000,
+                nonce
             },
             originPrivateKey
         );
@@ -80,15 +80,35 @@ class EthHandler {
         return createTransaction;
     }
 
-    sendTransactionRequest = async(rawTx) => {
+    batchCreateEOATransfer = async (originPrivateKey, ethAmount, destination, nonce, numberOfTxsToWrite) => {
+        const txRecord = [];
+        for (let i = 0; i < numberOfTxsToWrite; i++) {
+            const tx = await this.createEOATransfer(originPrivateKey, ethAmount, destination, nonce + i);
+            txRecord.push(tx);
+        }
+        return txRecord;
+    }
+
+    sendTransactionRequest = async (rawTx) => {
         return await web3.eth.sendSignedTransaction(rawTx, 'receipt', console.log);
     }
 
-    writeTransaction = async(rawTx) => {
+    writeTransaction = async (rawTx) => {
         const createReceipt = await web3.eth.sendSignedTransaction(rawTx);
         console.log(createReceipt);
         console.log(`Transaction successful with hash: ${createReceipt.transactionHash}`);
         return createReceipt;
+    }
+
+    emptyTransfer = async (originPrivateKey, destination) => {
+        const provider = await this.getEthersProvider();
+        const wallet = new ethers.Wallet(originPrivateKey, provider);
+        const tx = await wallet.sendTransaction({
+            to: destination,
+            value: 0
+        });
+        const txResp = await tx.wait(0);
+        console.log(`Empty transfer at Block ${+txResp.blockNumber} from ${wallet.address} to ${destination} successful.`);
     }
 
 }

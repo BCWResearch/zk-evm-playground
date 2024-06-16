@@ -1,52 +1,43 @@
 const config = require("../config/config");
 const ethHandler = require("../services/eth.handler");
 const { Web3, eth } = require('web3');
+const args = require('minimist')(process.argv.slice(2));
 const web3 = new Web3(config.internalImxConfig.rpcProvider);
-const txRecord = [];
-const { makeBatchRequest } = require('web3-batch-request');
 
+const NUMBER_OF_TXS = args['txs'] || 5;
 
-async function buildEOATransfer () {
-
+async function buildEOATransfer(numberOfTxsToWrite) {
     const pvKey = config.internalImxConfig.defaultAccount.privateKey;
-    const pvKeyAddress = await web3.eth.accounts.privateKeyToAccount(pvKey).address;
+    const pvKeyAddress = web3.eth.accounts.privateKeyToAccount(pvKey).address;
     const destination = config.internalImxConfig.accountDummy.publicAddress;
-
-    console.log(`Previous State`);
-    const balancePv = await ethHandler.getBalance(pvKeyAddress);
-    const balanceDest = await ethHandler.getBalance(destination);
-    console.log(`Balance origin ${pvKeyAddress} : ${web3.utils.fromWei(balancePv, "ether")}`);
-    console.log(`Balance dest ${destination} : ${web3.utils.fromWei(balanceDest, "ether")}`);
-
-    const fullTransaction = await ethHandler.createEOATransfer(pvKey, 0.1, destination);
-  /*  const object = {
-        blockHash: receipt.blockHash,
-        blockNumber: receipt.blockNumber,
-        txHash: receipt.transactionHash
-    }; */
-    
-    return fullTransaction;
+    const nonce = await web3.eth.getTransactionCount(pvKeyAddress);
+    const txs = await ethHandler.batchCreateEOATransfer(pvKey, 0.1, destination, +nonce.toString() + 1, numberOfTxsToWrite);
+    return txs;
 }
 
 async function populateWithEOATransfer(numberOfTxsToWrite) {
-    for(let i=0; i< numberOfTxsToWrite; i++) {
-       const originalTx = await buildEOATransfer();
-       txRecord.push(originalTx);
-    }
-    /*
-    var batch = new web3.BatchRequest();
-    await Promise.all(txRecord.map(async tx => {
-  
+    console.log(`Populating ${numberOfTxsToWrite} EOA transfer transactions...`)
+    const txs = await buildEOATransfer(numberOfTxsToWrite);
+    console.log(`Transactions built: ${txs.length}`);
 
-        const txSignedRequest = await ethHandler.sendTransactionRequest(tx.rawTransaction);
-       
-        batch.add(txSignedRequest);
-    }));
-    batch.execute()
-    */
+    console.log(`Doing empty transfer to increment nonce and block num...`);
+    await ethHandler.emptyTransfer(config.internalImxConfig.defaultAccount.privateKey, config.internalImxConfig.accountDummy.publicAddress);
 
-    // How do you batch write this one?
-    await ethHandler.writeTransaction(txRecord[0].rawTransaction);    
+    console.log(`Sending ${txs.length} transactions...`);
+    return await Promise.all(txs.map(async tx => await ethHandler.sendTransactionRequest(tx.rawTransaction)));
 }
 
-populateWithEOATransfer(5);
+populateWithEOATransfer(NUMBER_OF_TXS).then((txs) => {
+    console.log(`EOA transfers written to the blockchain.`);
+    const txsByBlock = txs.reduce((acc, tx) => {
+        if (!acc[tx.blockNumber]) {
+            acc[tx.blockNumber] = [];
+        }
+        acc[tx.blockNumber].push(tx);
+        return acc;
+    }, {});
+
+    for (const blockNum in txsByBlock) {
+        console.log(`Block ${+blockNum} has ${txsByBlock[blockNum].length} transactions.`);
+    }
+});
