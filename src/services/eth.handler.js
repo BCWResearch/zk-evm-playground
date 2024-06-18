@@ -80,6 +80,24 @@ class EthHandler {
         return createTransaction;
     }
 
+    createSignedTransaction = async (originPrivateKey, destination, data, gas, nonce) => {
+        const pvKeyAddress = await web3.eth.accounts.privateKeyToAccount(originPrivateKey).address;
+        // console.log(`Creating signed transaction from ${pvKeyAddress} to ${destination} with nonce ${nonce}`);
+        const createTransaction = await web3.eth.accounts.signTransaction(
+            {
+                from: pvKeyAddress,
+                to: destination,
+                data,
+                gas: gas || 21432,
+                maxFeePerGas: gas || 21432,
+                maxPriorityFeePerGas: gas || 21432,
+                nonce
+            },
+            originPrivateKey
+        );
+        return createTransaction;
+    }
+
     batchCreateEOATransfer = async (originPrivateKey, ethAmount, destination, nonce, numberOfTxsToWrite) => {
         const txRecord = [];
         for (let i = 0; i < numberOfTxsToWrite; i++) {
@@ -91,6 +109,19 @@ class EthHandler {
 
     sendTransactionRequest = async (rawTx) => {
         return await web3.eth.sendSignedTransaction(rawTx, 'receipt', console.log);
+    }
+
+    sendBatchTransactionRequest = async (txs, cooldownStep = 1) => {
+        const txsLength = txs.length;
+        const txsByStep = Math.ceil(txsLength / cooldownStep);
+        const txsSent = [];
+        for (let i = 0; i < txsByStep; i++) {
+            console.log(`Sending transactions ${i * cooldownStep} to ${(i + 1) * cooldownStep}...`);
+            const txsGroup = txs.slice(i * cooldownStep, (i + 1) * cooldownStep);
+            const txsSentGroup = await Promise.all(txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction)));
+            txsSent.push(...txsSentGroup);
+        }
+        return txsSent;
     }
 
     writeTransaction = async (rawTx) => {
