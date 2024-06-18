@@ -15,6 +15,10 @@ Exports data from the node to a csv
 #### set:eoa:transfer
 Writes eoa transfer to an RPC provider
 
+```bash
+npm run set:eoa:transfer -- --txs=10
+```
+
 #### chain
 Returns the chain for the RPC provider
     
