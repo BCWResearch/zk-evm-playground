@@ -5,6 +5,7 @@ const args = require('minimist')(process.argv.slice(2));
 const web3 = new Web3(config.internalImxConfig.rpcProvider);
 
 const NUMBER_OF_TXS = args['txs'] || 5;
+const BATCH_SIZE = args['batch'] || 10;
 
 async function buildEOATransfer(numberOfTxsToWrite) {
     const pvKey = config.internalImxConfig.defaultAccount.privateKey;
@@ -24,7 +25,7 @@ async function populateWithEOATransfer(numberOfTxsToWrite) {
     await ethHandler.emptyTransfer(config.internalImxConfig.defaultAccount.privateKey, config.internalImxConfig.accountDummy.publicAddress);
 
     console.log(`Sending ${txs.length} transactions...`);
-    return await Promise.all(txs.map(async tx => await ethHandler.sendTransactionRequest(tx.rawTransaction)));
+    return await ethHandler.sendBatchTransactionRequest(txs, BATCH_SIZE);
 }
 
 populateWithEOATransfer(NUMBER_OF_TXS).then((txs) => {

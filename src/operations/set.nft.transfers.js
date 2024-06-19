@@ -82,18 +82,9 @@ getLatestBlock()
     .then(async (contract) => {
         const totalBatch = Math.ceil(NUMBER_OF_TXS / BATCH_SIZE);
         console.log(`Total batches: ${totalBatch}`);
-        // return Array.from({ length: totalBatch }, (_, i) => i)
-        //     .reduce(async (acc, _) => {
-        //         await acc;
-        //         return signMintNFTWithNonce(contract, BATCH_SIZE);
-        //     }, Promise.resolve());
-
         const signedTxs = await signMintNFTWithNonce(contract, NUMBER_OF_TXS);
         console.log(`Total Signed Tx generated: ${signedTxs.length}`);
-
-        // const txs = await Promise.all(signedTxs.map(async tx => await ethHandler.sendTransactionRequest(tx.rawTransaction)));
-        // console.log(`Transactions sent: ${txs.length}`);
-
+        
         const txs = await ethHandler.sendBatchTransactionRequest(signedTxs, BATCH_SIZE);
 
         const txsByBlock = txs.reduce((acc, tx) => {
