@@ -19,6 +19,13 @@ Writes eoa transfer to an RPC provider
 npm run set:eoa:transfer -- --txs=10
 ```
 
+#### set:nft:transfer
+Writes nft transfer to an RPC provider
+
+```bash
+npm run set:nft:transfer -- --txs=10
+```
+
 #### chain
 Returns the chain for the RPC provider
     
