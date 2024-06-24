@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "map:data": "nodemon run operations/map.rpc.data.js",
     "set:eoa:transfer": "nodemon run operations/set.eoa.transfers.js",
+    "passport:native:transfer": "nodemon run operations/passport.native.transfers.js",
     "set:nft:transfer": "nodemon run operations/set.nft.transfers.js",
     "deploy:token:contract": "nodemon run operations/deploy.contract.js",
     "chain": "nodemon run operations/get.chain.js"

@@ -21,11 +21,14 @@ const config = {
         ]
     },
     internalImxConfig: {
-        rpcProvider: 'http://35.208.68.173:8545',
+        // rpcProvider: 'http://35.208.68.173:8545',
+        rpcProvider: 'http://127.0.0.1:7545',
         defaultAccount: {
             mnemonic: 'code code code code code code code code code code code quality',
-            privateKey: '0x42b6e34dc21598a807dc19d7784c71b2a7a01f6480dc6f58258f78e539f1a1fa',
-            publicAddress: '0x85da99c8a7c2c95964c8efd687e95e632fc533d6'
+            // privateKey: '0x42b6e34dc21598a807dc19d7784c71b2a7a01f6480dc6f58258f78e539f1a1fa',
+            // publicAddress: '0x85da99c8a7c2c95964c8efd687e95e632fc533d6',
+            privateKey: '0x6421222a9964cbe1b411191dcac1afda173ed99346c47302c6fe88f65d83583e',
+            publicAddress: '0x964ec59D0E05Db08440c822d7C588e63BBDE8c4e',
         },
         accountDummy: {
             privateKey: '0xb1bfcac96257b3392356f3f7dae2f041c539fe2692bbfa6d9da737d867094246',
