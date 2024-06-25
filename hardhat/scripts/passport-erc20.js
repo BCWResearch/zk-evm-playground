@@ -65,7 +65,6 @@ async function main() {
   // Transfer tokens to CFA
   const transferTx = await token.connect(owner).transfer(cfa, ethers.utils.parseEther('5'))
   await transferTx.wait()
-  // expect(await token.balanceOf(cfa)).to.equal(ethers.utils.parseEther('5'))
 
   console.log('Token Balance:', (await token.balanceOf(cfa)).toString())
 
@@ -86,34 +85,14 @@ async function main() {
   const data = encodeMetaTransactionsData(cfa, transactions, networkId, ethers.constants.Zero)
   const sig = walletMultiSign([{ weight: 1, owner: owner_a }], 1, data, false)
 
-  // console.log('Data:', data)
-
-
-  // estimate gas before execution
-  // const gasEstimate = await multiCall.estimateGas.deployAndExecute(cfa, mainModule.address, salt, factory.address, transactions, 0, sig);
-  // console.log('Gas Estimate:', gasEstimate.toString())
-
   // Execution
-  const dae = await multiCall.connect(executor).deployAndExecute(cfa, mainModule.address, salt, factory.address, transactions, 0, sig,
-    {
-      // gasLimit: optimalGasLimit
-    }
-  );
+  const dae = await multiCall
+    .connect(executor)
+    .deployAndExecute(cfa, mainModule.address, salt, factory.address, transactions, 0, sig);
   const daewait = await dae.wait();
-  console.log('Block Number:', daewait.blockNumber)
-  // expect(await token.balanceOf(cfa)).to.equal(ethers.utils.parseEther('4.8'))
+  console.log('Block Number:', daewait.blockNumber);
   const tokenBalance = await token.balanceOf(cfa);
   console.log('Token Balance:', tokenBalance.toString())
-  /*
-    // Transfer remaining, resign Tx with incremented nonce
-    // Here the deployment will be skipped and the transaction will be executed
-    const dataTwo = encodeMetaTransactionsData(cfa, [transaction, transaction], networkId, 1)
-    const sigTwo = walletMultiSign([{ weight: 1, owner: owner_a }], 1, dataTwo, false)
-    await multiCall.connect(executor).deployAndExecute(cfa, mainModule.address, salt, factory.address, [transaction, transaction], 1, sigTwo)
-    const cfaBalance = await token.balanceOf(cfa);
-    console.log('CFA Balance:', cfaBalance.toString())
-  */
-  // expect(await token.balanceOf(cfa)).to.equal(ethers.utils.parseEther('4.6'))
 }
 
 main()

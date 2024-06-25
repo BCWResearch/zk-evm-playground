@@ -104,6 +104,8 @@ class EthHandler {
             process.stdout.clearLine();
             process.stdout.cursorTo(0);
             process.stdout.write(`Creating Tx ${i + 1}/${numberOfTxsToWrite}...`);
+            // debug
+            console.log(`Creating EOA Tx ${i + 1}/${numberOfTxsToWrite} having nonce ${nonce + i}...`);
             const tx = await this.createEOATransfer(originPrivateKey, ethAmount, destination, nonce + i);
             txRecord.push(tx);
         }
@@ -123,7 +125,13 @@ class EthHandler {
         for (let i = 0; i < txsByStep; i++) {
             console.log(`Sending transactions ${i * cooldownStep} to ${(i + 1) * cooldownStep}...`);
             const txsGroup = txs.slice(i * cooldownStep, (i + 1) * cooldownStep);
-            const txsSentGroup = await Promise.all(txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction)));
+            const txsSentGroup = await Promise.all(
+                txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction)
+                    .catch((e, f) => {
+                        console.error(`Error sending transaction number ${tx.nonce} with hash ${tx.hash}: ${e}`);
+                        return null;
+                    }))
+            );
             txsSent.push(...txsSentGroup);
         }
         return txsSent;
