@@ -37,6 +37,7 @@ getLatestBlock()
         const txs = await ethHandler.sendBatchTransactionRequest(signedTxs, BATCH_SIZE);
 
         const txsByBlock = txs.reduce((acc, tx) => {
+            if (!tx?.blockNumber) return acc;
             if (!acc[tx.blockNumber]) {
                 acc[tx.blockNumber] = [];
             }

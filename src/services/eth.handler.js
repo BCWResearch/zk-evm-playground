@@ -103,9 +103,9 @@ class EthHandler {
         for (let i = 0; i < numberOfTxsToWrite; i++) {
             process.stdout.clearLine();
             process.stdout.cursorTo(0);
-            process.stdout.write(`Creating Tx ${i + 1}/${numberOfTxsToWrite}...`);
+            process.stdout.write(`Creating Tx ${i + 1}/${numberOfTxsToWrite} having nonce ${nonce + i}...`);
             // debug
-            console.log(`Creating EOA Tx ${i + 1}/${numberOfTxsToWrite} having nonce ${nonce + i}...`);
+            // console.log(`Creating EOA Tx ${i + 1}/${numberOfTxsToWrite} having nonce ${nonce + i}...`);
             const tx = await this.createEOATransfer(originPrivateKey, ethAmount, destination, nonce + i);
             txRecord.push(tx);
         }
@@ -117,25 +117,77 @@ class EthHandler {
         return await web3.eth.sendSignedTransaction(rawTx, 'receipt', console.log);
     }
 
-    sendBatchTransactionRequest = async (txs, cooldownStep = 1) => {
+    Racer_sendBatchTransactionRequest = async (txs, cooldownStep = 1, raceMode = true) => {
+        const txsLength = txs.length;
+        cooldownStep = txsLength < cooldownStep ? txsLength : cooldownStep;
+        const txsByStep = Math.ceil(txsLength / cooldownStep);
+        const txsSent = [];
+        const pendingPromises = [];
+        for (let i = 0; i < txsByStep; i++) {
+            console.log(`Sending transactions ${i * cooldownStep} to ${(i + 1) * cooldownStep}...`);
+            const txsGroup = txs.slice(i * cooldownStep, (i + 1) * cooldownStep);
+            const txsSentGroupPromises = txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction)
+                .catch((e, f) => {
+                    console.error(`Error sending transaction number ${tx.nonce} with hash ${tx.hash}: ${e}`);
+                    return null;
+                }));
+            if (raceMode) {
+                await Promise.race(txsSentGroupPromises);
+                pendingPromises.push(Promise.all(txsSentGroupPromises).then((txsSentGroup) => {
+                    txsSent.push(...txsSentGroup);
+                }));
+            } else {
+                await Promise.all(txsSentGroupPromises).then((txsSentGroup) => {
+                    txsSent.push(...txsSentGroup);
+                });
+            }
+
+        }
+        await Promise.all(pendingPromises);
+        return txsSent;
+    }
+
+    NORMAL_sendBatchTransactionRequest = async (txs, cooldownStep = 1) => {
         const txsLength = txs.length;
         cooldownStep = txsLength < cooldownStep ? txsLength : cooldownStep;
         const txsByStep = Math.ceil(txsLength / cooldownStep);
         const txsSent = [];
         for (let i = 0; i < txsByStep; i++) {
-            console.log(`Sending transactions ${i * cooldownStep} to ${(i + 1) * cooldownStep}...`);
+            console.log(`Sending transactions ${i * cooldownStep} to ${(i + 1) * cooldownStep} ...`);
             const txsGroup = txs.slice(i * cooldownStep, (i + 1) * cooldownStep);
-            const txsSentGroup = await Promise.all(
-                txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction)
-                    .catch((e, f) => {
-                        console.error(`Error sending transaction number ${tx.nonce} with hash ${tx.hash}: ${e}`);
-                        return null;
-                    }))
-            );
+            const txsSentGroup = await Promise.all(txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction).catch((e, f) => {
+                console.error(`Error sending transaction hash ${tx.transactionHash}: ${e}`);
+                return null;
+            })));
             txsSent.push(...txsSentGroup);
         }
         return txsSent;
     }
+
+    sendBatchTransactionRequest = async (txs, cooldownStep = 10, cooldownTime = 3000) => {
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        const txsLength = txs.length;
+        const txsSent = [];
+
+        for (let i = 0; i < txsLength; i += cooldownStep) {
+            console.log(`Sending transactions ${i} to ${Math.min(i + cooldownStep, txsLength)}...`);
+            const txsGroup = txs.slice(i, i + cooldownStep);
+
+            const txsSentGroupPromises = txsGroup.map(async tx =>
+                await this.sendTransactionRequest(tx.rawTransaction).catch((e) => {
+                    console.error(`Error sending transaction number ${tx.nonce} with hash ${tx.hash}: ${e}`);
+                    return null;
+                })
+            );
+
+            txsSent.push(...txsSentGroupPromises);
+
+            // Cooldown period after each batch
+            console.log(`Cooldown for ${cooldownTime} ms...`);
+            await sleep(cooldownTime);
+        }
+        return Promise.all(txsSent);
+    };
 
     writeTransaction = async (rawTx) => {
         const createReceipt = await web3.eth.sendSignedTransaction(rawTx);
@@ -147,12 +199,20 @@ class EthHandler {
     emptyTransfer = async (originPrivateKey, destination) => {
         const provider = await this.getEthersProvider();
         const wallet = new ethers.Wallet(originPrivateKey, provider);
+        const sendTimeStart = Date.now();
         const tx = await wallet.sendTransaction({
             to: destination,
             value: 0
         });
+        const sendTimeEnd = Date.now();
         const txResp = await tx.wait(1);
+        const waitTimeEnd = Date.now();
+        const timeIntervals = {
+            sendTime: sendTimeEnd - sendTimeStart,
+            waitTime: waitTimeEnd - sendTimeEnd
+        }
         console.log(`Empty transfer at Block ${+txResp.blockNumber} from ${wallet.address} to ${destination} successful.`);
+        return timeIntervals;
     }
 
 }

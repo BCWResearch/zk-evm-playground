@@ -18,15 +18,15 @@ async function populateWithEOATransfer(numberOfTxsToWrite) {
     console.log(`Transactions built: ${txs.length}`);
 
     console.log(`Doing empty transfer to increment nonce and block num...`);
-    await ethHandler.emptyTransfer(config.internalImxConfig.defaultAccount.privateKey, config.internalImxConfig.accountDummy.publicAddress);
-
+    const intervals = await ethHandler.emptyTransfer(config.internalImxConfig.defaultAccount.privateKey, config.internalImxConfig.accountDummy.publicAddress);
     console.log(`Sending ${txs.length} transactions...`);
-    return await ethHandler.sendBatchTransactionRequest(txs, BATCH_SIZE);
+    return await ethHandler.sendBatchTransactionRequest(txs, BATCH_SIZE, intervals.waitTime);
 }
 
 populateWithEOATransfer(NUMBER_OF_TXS).then((txs) => {
     console.log(`EOA transfers written to the blockchain.`);
     const txsByBlock = txs.reduce((acc, tx) => {
+        if (!tx?.blockNumber) return acc;
         if (!acc[tx.blockNumber]) {
             acc[tx.blockNumber] = [];
         }
