@@ -4,6 +4,36 @@ const web3 = new Web3(config.internalImxConfig.rpcProvider);
 const { ethers } = require('ethers');
 
 class EthHandler {
+
+    newBlockListener = async (callback) => {
+        // web3.eth.subscribe('newBlockHeaders', (error, blockHeader) => {
+        //     if (error) {
+        //         console.error(`Error in new block listener: ${error}`);
+        //         return;
+        //     }
+        //     // callback the blockNumber
+        //     callback(blockHeader.number);
+        // });
+
+        // The current provider does not support subscriptions
+        // polling for new blocks
+        let lastBlock = await this.getLatestBlockNumber();
+        let currentBlock = lastBlock;
+        let interval = setInterval(async () => {
+            try {
+                currentBlock = await this.getLatestBlockNumber();
+                if (currentBlock > lastBlock) {
+                    callback(currentBlock);
+                    lastBlock = currentBlock;
+                }
+            } catch (e) {
+                console.error(`Error in new block listener: ${e}`);
+                // clearInterval(interval);
+            }
+        }, 1000)
+        return interval;
+    }
+
     getEthersProvider = async () => {
         return new ethers.providers.JsonRpcProvider(config.internalImxConfig.rpcProvider);
     }
@@ -27,6 +57,11 @@ class EthHandler {
         const accounts = await web3.eth.getAccounts();
         console.log(`Attempting to get accounts.. ${accounts[0]}`);
         return accounts;
+    }
+
+    getLatestBlockNumber = async () => {
+        const block = await web3.eth.getBlockNumber();
+        return block;
     }
 
     getBlockRange = async () => {
@@ -114,80 +149,78 @@ class EthHandler {
     }
 
     sendTransactionRequest = async (rawTx) => {
-        return await web3.eth.sendSignedTransaction(rawTx, 'receipt', console.log);
+        // const _web3 = new Web3(config.internalImxConfig.rpcProvider);
+        return await web3.eth.sendSignedTransaction(rawTx, 'receipt', console.log).catch((e) => {
+            console.error(`--Error sending transaction: ${e}`);
+            return null;
+        })
     }
 
-    Racer_sendBatchTransactionRequest = async (txs, cooldownStep = 1, raceMode = true) => {
+    _BN_sendBatchTransactionRequest = async (txs, cooldownStep = 1) => {
         const txsLength = txs.length;
         cooldownStep = txsLength < cooldownStep ? txsLength : cooldownStep;
         const txsByStep = Math.ceil(txsLength / cooldownStep);
         const txsSent = [];
-        const pendingPromises = [];
+
+        let i = 0;
+        const listener = await this.newBlockListener((blockNumber) => {
+            console.log(`New block mined: ${blockNumber}`);
+            if (i >= txsByStep) {
+                clearInterval(listener);
+                console.log(`All transactions sent.`);
+                return;
+            }
+            const txsGroup = txs.slice(i * cooldownStep, (i + 1) * cooldownStep);
+            if (txsGroup.length === 0) {
+                clearInterval(listener);
+                console.log(`All transactions sent.`);
+                return;
+            }
+            console.log(`Sending transactions ${i * cooldownStep} to ${(i + 1) * cooldownStep} ...`);
+            const txsSentGroup = txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction).catch((e, f) => {
+                console.error(`Error sending transaction hash ${tx.transactionHash}: ${e}`);
+                return null;
+            }));
+            txsSent.push(...txsSentGroup);
+            i++;
+        });
+
+        // for (let i = 0; i < txsByStep; i++) {
+        //     console.log(`Sending transactions ${i * cooldownStep} to ${(i + 1) * cooldownStep} ...`);
+        //     const txsGroup = txs.slice(i * cooldownStep, (i + 1) * cooldownStep);
+        //     const txsSentGroup = await Promise.all(txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction).catch((e, f) => {
+        //         console.error(`Error sending transaction hash ${tx.transactionHash}: ${e}`);
+        //         return null;
+        //     })));
+        //     txsSent.push(...txsSentGroup);
+        // }
+
+        await new Promise((resolve, reject) => {
+            const waitUntiltxsByStep = setInterval(() => {
+                if (txsSent.length >= txsLength) {
+                    clearInterval(waitUntiltxsByStep);
+                    clearInterval(listener);
+                    resolve(txsSent);
+                }
+            }, 100);
+        })
+        const resp = await Promise.all(txsSent);
+        clearInterval(listener);
+        return resp;
+    }
+
+    sendBatchTransactionRequest = async (txs, cooldownStep = 1) => {
+        const txsLength = txs.length;
+        const txsByStep = Math.ceil(txsLength / cooldownStep);
+        const txsSent = [];
         for (let i = 0; i < txsByStep; i++) {
             console.log(`Sending transactions ${i * cooldownStep} to ${(i + 1) * cooldownStep}...`);
             const txsGroup = txs.slice(i * cooldownStep, (i + 1) * cooldownStep);
-            const txsSentGroupPromises = txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction)
-                .catch((e, f) => {
-                    console.error(`Error sending transaction number ${tx.nonce} with hash ${tx.hash}: ${e}`);
-                    return null;
-                }));
-            if (raceMode) {
-                await Promise.race(txsSentGroupPromises);
-                pendingPromises.push(Promise.all(txsSentGroupPromises).then((txsSentGroup) => {
-                    txsSent.push(...txsSentGroup);
-                }));
-            } else {
-                await Promise.all(txsSentGroupPromises).then((txsSentGroup) => {
-                    txsSent.push(...txsSentGroup);
-                });
-            }
-
-        }
-        await Promise.all(pendingPromises);
-        return txsSent;
-    }
-
-    NORMAL_sendBatchTransactionRequest = async (txs, cooldownStep = 1) => {
-        const txsLength = txs.length;
-        cooldownStep = txsLength < cooldownStep ? txsLength : cooldownStep;
-        const txsByStep = Math.ceil(txsLength / cooldownStep);
-        const txsSent = [];
-        for (let i = 0; i < txsByStep; i++) {
-            console.log(`Sending transactions ${i * cooldownStep} to ${(i + 1) * cooldownStep} ...`);
-            const txsGroup = txs.slice(i * cooldownStep, (i + 1) * cooldownStep);
-            const txsSentGroup = await Promise.all(txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction).catch((e, f) => {
-                console.error(`Error sending transaction hash ${tx.transactionHash}: ${e}`);
-                return null;
-            })));
+            const txsSentGroup = await Promise.all(txsGroup.map(async tx => await this.sendTransactionRequest(tx.rawTransaction)));
             txsSent.push(...txsSentGroup);
         }
         return txsSent;
     }
-
-    sendBatchTransactionRequest = async (txs, cooldownStep = 10, cooldownTime = 3000) => {
-        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        const txsLength = txs.length;
-        const txsSent = [];
-
-        for (let i = 0; i < txsLength; i += cooldownStep) {
-            console.log(`Sending transactions ${i} to ${Math.min(i + cooldownStep, txsLength)}...`);
-            const txsGroup = txs.slice(i, i + cooldownStep);
-
-            const txsSentGroupPromises = txsGroup.map(async tx =>
-                await this.sendTransactionRequest(tx.rawTransaction).catch((e) => {
-                    console.error(`Error sending transaction number ${tx.nonce} with hash ${tx.hash}: ${e}`);
-                    return null;
-                })
-            );
-
-            txsSent.push(...txsSentGroupPromises);
-
-            // Cooldown period after each batch
-            console.log(`Cooldown for ${cooldownTime} ms...`);
-            await sleep(cooldownTime);
-        }
-        return Promise.all(txsSent);
-    };
 
     writeTransaction = async (rawTx) => {
         const createReceipt = await web3.eth.sendSignedTransaction(rawTx);

@@ -1,0 +1,20 @@
+{
+  "name": "hardhat-project",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.6"
+  },
+  "dependencies": {
+    "@openzeppelin/cli": "^2.8.2",
+    "@openzeppelin/contracts": "4.9.3",
+    "@openzeppelin/contracts-upgradeable": "^4.2.0",
+    "bignumber.js": "^4.0.4",
+    "seaport": "git://github.com/immutable/seaport.git#1.5.0+im.1.3",
+    "seaport-core": "git://github.com/immutable/seaport-core.git#1.5.0+im.1",
+    "axelar-gmp-sdk-solidity": "git://github.com/axelarnetwork/axelar-gmp-sdk-solidity",
+    "openzeppelin-contracts": "git://github.com/OpenZeppelin/openzeppelin-contracts.git#v5.0.2",
+    "solidity-bytes-utils": "git://github.com/GNSPS/solidity-bytes-utils",
+    "solidity-bits": "git://github.com/estarriolvetch/solidity-bits",
+    "openzeppelin-contracts-upgradeable": "git://github.com/openzeppelin/openzeppelin-contracts-upgradeable#v4.9.3"
+  }
+}
