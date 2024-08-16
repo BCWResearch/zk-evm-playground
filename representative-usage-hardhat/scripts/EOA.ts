@@ -2,6 +2,10 @@ import hre from "hardhat";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { TransactionReceipt } from "ethers";
 import { newBlockListener } from "./utils.ts/blockListener";
+import { setupAccounts } from "./deploy/01.setupAccounts";
+import { installGemGame } from "./deploy/05.installGemGame";
+import { DeployAccounts } from "./types/deploy.types";
+
 
 const sendEthToEOA = async (signer: HardhatEthersSigner): Promise<TransactionReceipt | null> => {
     try {
@@ -27,13 +31,32 @@ const sendEthToEOA = async (signer: HardhatEthersSigner): Promise<TransactionRec
     }
 }
 
+
 const main = async () => {
     const signers = await hre.ethers.getSigners();
     console.log("Total Signers: ", signers.length);
 
+    const treasurySigner = await hre.ethers.provider.getSigner(0);
+    const runName = "run1";
+    const accounts = await setupAccounts(treasurySigner, runName, true);
+
+    const deployAccounts: DeployAccounts = accounts;
+    const { deployer, admin } = deployAccounts;
+
+    const gemGame = await installGemGame(deployer, admin);
+
+    const earnGem = async (signer: HardhatEthersSigner): Promise<TransactionReceipt | null> => {
+        const tx = await gemGame.connect(signer).earnGem();
+        const txResp = await tx.wait();
+        console.log("Transaction Hash: ", txResp?.hash);
+        console.log("Transaction Block Number: ", txResp?.blockNumber);
+        return txResp;
+    }
+
     let index = 0
-    const START_PAD = 800;
-    const TOTAL_ACCOUNTS = 10;
+    const START_PAD = 1700;
+    const GEM_GAME_START_PAD = 2000;
+    const TOTAL_ACCOUNTS = 100;
 
     const totalActiveBlocks = 1;
     let currentBlockCount = 0;
@@ -50,8 +73,18 @@ const main = async () => {
 
         const _resp = (_20Signers.map(async (signer) => {
             return await sendEthToEOA(signer);
+            // return await earnGem(signer);
+
         }));
         resp.push(..._resp);
+
+        const gemGameStart = GEM_GAME_START_PAD + (index * TOTAL_ACCOUNTS);
+        const gemGameEnd = gemGameStart + TOTAL_ACCOUNTS;
+        const _20GemSigners = signers.slice(gemGameStart, gemGameEnd);
+        const _gemResp = (_20GemSigners.map(async (signer) => {
+            return await earnGem(signer);
+        }));
+        resp.push(..._gemResp);
         currentBlockCount++;
     })
 

@@ -3,11 +3,11 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { TransactionReceipt, HDNodeWallet, Wallet } from "ethers";
 import BigNumber from "bignumber.js";
 import fs from "fs";
-import { DeployAccounts } from "../types/deploy.types";
+import { DeployAccounts, PassportWallet } from "../types/deploy.types";
 import ScriptConfig from "../scriptConfig";
 
 
-export const installPassportWallet = async (deployer: Wallet, admin: Wallet, relayer: Wallet, passportSigner: Wallet): Promise<any> => {
+export const installPassportWallet = async (deployer: Wallet, admin: Wallet, relayer: Wallet, passportSigner: Wallet): Promise<PassportWallet> => {
     const MultiCallDeploy = await hre.ethers.getContractFactory('MultiCallDeploy');
     const multiCallDeployContract = await MultiCallDeploy.connect(deployer).deploy(
         admin.address,
