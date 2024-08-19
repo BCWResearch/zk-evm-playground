@@ -5,12 +5,10 @@ import hre from "hardhat";
 import { deployAll } from "./deploy/deployAll";
 import { TEST_ACCOUNTS } from "../testaccounts";
 
-const performPassportGemGameCall = async (owner_a: Wallet) => {
-    // Encode the image hash for the passport wallet (similar to your previous example)
+const performPassportGemGameCall = async (owner_a: Wallet, nonce: number) => {
     const salt = encodeImageHash(1, [{ weight: 1, owner: owner_a }]);
     console.log('Salt:', salt);
 
-    // Get your previously deployed passport wallet components
     const { factory, mainModule, multiCall } = ScriptConfig.passportWallet;
 
     // Calculate CFA (Contract Factory Address) based on the salt
@@ -22,8 +20,8 @@ const performPassportGemGameCall = async (owner_a: Wallet) => {
     const transaction = {
         delegateCall: false,
         revertOnError: true,
-        gasLimit: "0",  // You might want to adjust this based on actual gas requirements
-        target: ScriptConfig.gemGame.target.toString(),  // Assuming gemGame is stored in ScriptConfig
+        gasLimit: "0", 
+        target: ScriptConfig.gemGame.target.toString(),
         value: "0",
         data: ScriptConfig.gemGame.interface.encodeFunctionData('earnGem')  // Encode the call to earnGem
     };
@@ -31,16 +29,11 @@ const performPassportGemGameCall = async (owner_a: Wallet) => {
     const TOTAL_TXS = 1;
     const transactions = Array(TOTAL_TXS).fill(transaction);
 
-    const nonce = await hre.ethers.provider.getTransactionCount(cfa);
-
     // Encode meta-transaction data
-    const data = encodeMetaTransactionsData(cfa, transactions, +((await hre.ethers.provider.getNetwork()).chainId.toString()), nonce);
+    const data = encodeMetaTransactionsData(cfa, transactions, ScriptConfig.chainId, nonce);
 
     // Sign the meta-transaction
     const sig = await walletMultiSign([{ weight: 1, owner: owner_a }], 1, data, false);
-
-    // Execute the meta-transaction through MultiCall
-    const relayerWallet = ScriptConfig.deployAccounts.relayer;
 
     const { admin } = ScriptConfig.deployAccounts;
     const executorRole = await multiCall.EXECUTOR_ROLE();

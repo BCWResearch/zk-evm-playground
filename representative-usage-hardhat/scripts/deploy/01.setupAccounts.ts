@@ -1,10 +1,9 @@
 import hre from "hardhat";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { TransactionReceipt, HDNodeWallet, Wallet } from "ethers";
+import { HDNodeWallet, Wallet } from "ethers";
 import BigNumber from "bignumber.js";
 import fs from "fs";
 import { DeployAccounts } from "../types/deploy.types";
-import ScriptConfig from "../scriptConfig";
 
 
 const transferEth = async (sender: HardhatEthersSigner | HDNodeWallet, receiver: string, amount: string) => {

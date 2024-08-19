@@ -1,10 +1,5 @@
 import hre from "hardhat";
-import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { TransactionReceipt, HDNodeWallet, Wallet, ethers } from "ethers";
-import fs from "fs";
-import { BigNumber } from "@ethersproject/bignumber";
-import { DeployAccounts, } from "../types/deploy.types";
-import ScriptConfig from "../scriptConfig";
+import { Wallet } from "ethers";
 import { OperatorAllowlistUpgradeable } from "../../typechain-types";
 
 export const installRoyaltyAllowlist = async (deployer: Wallet, admin: Wallet): Promise<OperatorAllowlistUpgradeable> => {
