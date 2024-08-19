@@ -41,17 +41,37 @@ const performPassportGemGameCall = async (owner_a: Wallet) => {
 
     // Execute the meta-transaction through MultiCall
     const relayerWallet = ScriptConfig.deployAccounts.relayer;
-    const tx = await multiCall.connect(relayerWallet).deployAndExecute(cfa, mainModule.target, salt, factory.target, transactions, nonce, sig);
+
+    const { admin } = ScriptConfig.deployAccounts;
+    const executorRole = await multiCall.EXECUTOR_ROLE();
+
+    const roleTx = await multiCall.connect(admin).grantRole(executorRole, owner_a.address)
+    await roleTx.wait()
+
+
+    // const grantRoleTx = await ScriptConfig.accessControlledDeployer.connect(admin).grantDeployerRole([owner_a.address]);
+    // await grantRoleTx.wait();
+    
+    const tx = await multiCall.connect(owner_a).deployAndExecute(cfa, mainModule.target, salt, factory.target, transactions, nonce, sig);
     const receipt = await tx.wait();
+
+
 
     console.log('Transaction Hash:', receipt?.hash);
     console.log('Block Number:', receipt?.blockNumber);
 };
 
 const main = async () => {
-    const resp = await deployAll(false);
+
+    const treasurySigner = await hre.ethers.provider.getSigner(1);
+    const runName = "run1";
+    const resp = await deployAll(treasurySigner, runName, false);
+
     const owner_a = new Wallet(TEST_ACCOUNTS[112], hre.ethers.provider);
+    console.log('Owner A:', owner_a.address);
     await performPassportGemGameCall(owner_a);
 }
+
+
 
 main();

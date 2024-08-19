@@ -65,13 +65,10 @@ const loadDeployedContractsFromFile = async (treasurySigner: HardhatEthersSigner
     return contracts;
 }
 
-export const deployAll = async (newDeployment: boolean) => {
+export const deployAll = async (treasurySigner: HardhatEthersSigner, runName: string, newDeployment: boolean) => {
     const chainId = (await hre.ethers.provider.getNetwork()).chainId;
     ScriptConfig.chainId = +chainId.toString();
     console.log("Chain ID: ", ScriptConfig.chainId);
-
-    const treasurySigner = await hre.ethers.provider.getSigner(0);
-    const runName = "run1";
 
     if (!newDeployment && fs.existsSync(generateWriteableFileNames(ScriptConfig.chainId, treasurySigner, runName))) {
         const contracts = await loadDeployedContractsFromFile(treasurySigner, runName);
@@ -163,7 +160,7 @@ export const deployAll = async (newDeployment: boolean) => {
 
 
 const main = async () => {
-    await deployAll(true);
+    // await deployAll(true);
 }
 
 if (require.main === module) {
