@@ -3,11 +3,12 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { TransactionReceipt, HDNodeWallet, Wallet } from "ethers";
 import BigNumber from "bignumber.js";
 import fs from "fs";
-import { DeployAccounts } from "../types/deploy.types";
+import { DeployAccounts, HuntersOnChain } from "../types/deploy.types";
 import ScriptConfig from "../scriptConfig";
 import { Recipe } from "../../typechain-types";
 
-export const installHuntersOnChain = async (deployer: Wallet, admin: Wallet): Promise<any> => {
+
+export const installHuntersOnChain = async (deployer: Wallet, admin: Wallet): Promise<HuntersOnChain> => {
     const whiteListedMinters = [ScriptConfig.deployAccounts.huntersOnChainMinter.address];
 
     //Relayer
@@ -150,6 +151,19 @@ export const installHuntersOnChain = async (deployer: Wallet, admin: Wallet): Pr
         ScriptConfig.deployAccounts.huntersOnChainMinter.address
     );
     await huntersOnChainFund.waitForDeployment();
+
+    return {
+        bgemErc20: bgemErc20Contract,
+        huntersOnChainRelayer,
+        huntersOnChainEquipments,
+        huntersOnChainArtifacts,
+        huntersOnChainShards,
+        huntersOnChainClaim,
+        huntersOnChainEIP712,
+        huntersOnChainClaimGame,
+        huntersOnChainRecipe,
+        huntersOnChainFund
+    };
 }
 
 

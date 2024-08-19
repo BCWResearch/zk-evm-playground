@@ -55,7 +55,7 @@ export const passportMultiCall = async (
         walletFactory,
         startupWalletImpl,
         immutableSigner
-    } = ScriptConfig.passportWallet;
+    } = ScriptConfig.passportWalletV1;
 
     const len = contracts.length;
     gas = gas || Array(len).fill(PASSPORT_TX_GAS);
@@ -112,39 +112,69 @@ export const passportMultiCall = async (
     );
 };
 
+
+function compareAddr(addr1: string, addr2: string): number {
+    const address1 = ethers.getAddress(addr1).toLowerCase();
+    const address2 = ethers.getAddress(addr2).toLowerCase();
+
+    if (address1 < address2) {
+        return -1;
+    } else if (address1 > address2) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+
 // Helper functions
 function encodeImageHash(addrA: string, addrB: string): string {
-    let addr1, addr2;
-    if (BigNumber.from(addrA).gt(BigNumber.from(addrB))) {
-        addr1 = addrA;
-        addr2 = addrB;
-    } else {
-        addr2 = addrA;
-        addr1 = addrB;
-    }
+    const accounts = [addrA, addrB];
+    const sorted = accounts.sort((a, b) => compareAddr(a,b));
+    let imageHash = ethers.solidityPacked(['uint256'], [1]);
 
-    let imageHash = keccak256(zeroPadValue(BigNumber.from(2).toHexString(), 32));
-    imageHash = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["bytes32", "uint256", "address"], [imageHash, 1, addr1]));
-    imageHash = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["bytes32", "uint256", "address"], [imageHash, 1, addr2]));
+    sorted.forEach((a) =>
+        imageHash = ethers.keccak256(
+            ethers.AbiCoder.defaultAbiCoder().encode(
+                ['bytes32', 'uint8', 'address'],
+                [imageHash, 1, a]
+            )
+        )
+    );
 
     return imageHash;
 }
 
+function hexZeroPad(value: string, length: number): string {
+    const hexValue = ethers.toBeHex(value);
+    if (hexValue.length > length * 2 + 2) {
+        throw new Error('Value is already longer than desired length');
+    }
+    return ethers.zeroPadValue(hexValue, length);
+}
+
+function hexDataSlice(data: string, start: number, end?: number): string {
+    const hexData = ethers.getBytes(data);  // Converts to byte array
+    return ethers.hexlify(hexData.slice(start, end));
+}
+
 async function addressOf(factory: string, mainModule: string, imageHash: string): Promise<string> {
     // const deployCode = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["address"], [mainModule]));
-    const walletDeployCode = WALLET_DEPLOY_CODE;
-    const mainModuleAsUint160 = BigNumber.from(mainModule).toHexString().slice(2).padStart(40, '0');  // uint160 representation of the main module
-    const deployCode = keccak256(walletDeployCode + mainModuleAsUint160);
-    console.log("Deploy Code Hash:", deployCode);
-    const hash = keccak256(
-        ethers.concat([
-            toUtf8Bytes("\xff"),  // Constant byte
-            factory,  // Factory address
-            imageHash,  // Image hash (salt)
-            deployCode  // Bytecode hash
-        ])
+    const codeHash = ethers.keccak256(
+        ethers.solidityPacked(
+            ['bytes', 'bytes32'],
+            [WALLET_DEPLOY_CODE, hexZeroPad(mainModule, 32)]
+        )
     );
-    return getAddress("0x" + hash.slice(-40));
+
+    const hash = ethers.keccak256(
+        ethers.solidityPacked(
+            ['bytes1', 'address', 'bytes32', 'bytes32'],
+            ['0xff', factory, imageHash, codeHash]
+        )
+    );
+
+    return ethers.getAddress(hexDataSlice(hash, 12));
 }
 
 async function getNextNonce(walletAddress: string): Promise<number> {
@@ -207,7 +237,7 @@ function combineSignatures(
     const sig1Obj = Signature.from(sig1);
     const sig2Obj = Signature.from(sig2);
 
-    const immutableSignerAddress = ScriptConfig.passportWallet.immutableSigner.target;
+    const immutableSignerAddress = ScriptConfig.passportWalletV1.immutableSigner.target;
 
     // Signature components
     const sig1vHex = toBeHex(sig1Obj.v);
