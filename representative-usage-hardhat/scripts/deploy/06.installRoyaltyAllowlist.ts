@@ -5,7 +5,6 @@ import fs from "fs";
 import { BigNumber } from "@ethersproject/bignumber";
 import { DeployAccounts, } from "../types/deploy.types";
 import ScriptConfig from "../scriptConfig";
-import { passportCall, passportCallWithGasAndValue } from "../helpers/multicall.helper";
 import { OperatorAllowlistUpgradeable } from "../../typechain-types";
 
 export const installRoyaltyAllowlist = async (deployer: Wallet, admin: Wallet): Promise<OperatorAllowlistUpgradeable> => {
