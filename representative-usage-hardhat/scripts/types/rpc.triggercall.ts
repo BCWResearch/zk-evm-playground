@@ -1,3 +1,5 @@
+import { ContractTransactionReceipt, TransactionReceipt } from "ethers";
+
 export interface RPCTriggerCall {
-    trigger: Function;
-} 
+    trigger: () => Promise<TransactionReceipt | ContractTransactionReceipt | null>;
+}
