@@ -23,6 +23,65 @@ async function populateWithEOATransfer(numberOfTxsToWrite) {
     return await ethHandler.sendBatchTransactionRequest(txs, BATCH_SIZE, intervals.waitTime);
 }
 
+// (async () => {
+//     const { ethers } = require('ethers');
+//     const provider = new ethers.providers.JsonRpcProvider(config.internalImxConfig.rpcProvider);
+//     const account = "0xEFD6e8184f22C21033046A51d556e2435DEB61AC";
+    
+//     const pvKey = "0x9ee848a141706cafed6b804fea0d305bd05d96e932420b7c30771d6887a25c99"
+//     const pvKeyAddress = web3.eth.accounts.privateKeyToAccount(pvKey).address;
+
+//     // get balance
+//     const fundFrombalance = await web3.eth.getBalance(pvKeyAddress);
+//     console.log(`Fund from Balance: ${fundFrombalance}`);
+
+
+//     // get balance
+//     let balance = await web3.eth.getBalance(account);
+//     console.log(`Fund to Balance: ${balance}`);
+//     console.log(`Fund to Balance in ETH: ${web3.utils.fromWei(balance, 'ether')}`);
+
+//     // fund half of the balance from fundFromBalance to the account
+//     const toFund = (+fundFrombalance.toString() / 2).toLocaleString('fullwide', {useGrouping:false});
+
+//     console.log(`Funding ${toFund} to ${account}...`);
+//     const wallet = new ethers.Wallet(pvKey, provider);
+//     const tx = {
+//         to: account,
+//         value: toFund,
+//         nonce: await wallet.getTransactionCount(),
+//         // gasLimit: 21000,
+//         // gasPrice: ethers.utils.parseUnits('1', 'gwei')
+//     };
+//     const txResponse = await wallet.sendTransaction(tx);
+//     console.log(`Transaction hash: ${txResponse.hash}`);
+
+// })();
+
+// (async () =>{
+//     const blockRangeStart = 30;
+//     const blockRangeEnd = 79;
+//     // get total tx count in the block
+//     // const block = await web3.eth.getBlock(blockNum);
+//     // const gasUsed = block.gasUsed;
+//     // const gasLimit = block.gasLimit;
+//     // const txCount = block?.transactions?.length || 0;
+//     // console.log(`Block ${blockNum} has ${txCount} transactions and used ${gasUsed} gas.`);
+
+
+//     // console log all tx gas used and gas limit with tx count
+
+//     for (let blockNum = blockRangeStart; blockNum <= blockRangeEnd; blockNum++) {
+//         const block = await web3.eth.getBlock(blockNum);
+//         const gasUsed = block.gasUsed;
+//         const gasLimit = block.gasLimit;
+//         const txCount = block?.transactions?.length || 0;
+//         console.log(`Block ${blockNum} has ${txCount} transactions and used ${gasUsed} gas out of ${gasLimit} gas limit.`);
+//     }
+    
+// })();
+
+// return;
 populateWithEOATransfer(NUMBER_OF_TXS).then((txs) => {
     console.log(`EOA transfers written to the blockchain.`);
     const txsByBlock = txs.reduce((acc, tx) => {

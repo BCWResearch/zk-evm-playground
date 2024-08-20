@@ -149,33 +149,43 @@ async function setupERC20FactoryFixture() {
     const optimalGasLimit = ethers.constants.Two.pow(21)
 
     // Contracts are deployed using the first signer/account by default
+    console.log(`Deploying Wallet Factory...`)
     const walletJsonRaw = fs.readFileSync(`${contractPath}/../contracts/artifacts/contracts_Factory_abi.json`);
     const walletcontractJSON = JSON.parse(walletJsonRaw);
     const WalletFactory = new ethers.ContractFactory(walletcontractJSON.abi, walletcontractJSON.bytecode, owner);
     const factory = await WalletFactory.deploy(owner.address, await owner.getAddress());
     await factory.deployed();
+    console.log(`Wallet Factory deployed at ${factory.address}`)
 
+    console.log(`Deploying Main Module...`)
     const mainModuleJsonRaw = fs.readFileSync(`${contractPath}/../contracts/artifacts/contracts_MainModule_abi.json`);
     const mainModuleJSON = JSON.parse(mainModuleJsonRaw);
     const MainModule = new ethers.ContractFactory(mainModuleJSON.abi, mainModuleJSON.bytecode, owner);
     const mainModule = await MainModule.deploy(factory.address)
     await mainModule.deployed()
+    console.log(`Main Module deployed at ${mainModule.address}`)
 
+    console.log(`Deploying Multi Call...`)
     const multiCallDeployJsonRaw = fs.readFileSync(`${contractPath}/../contracts/artifacts/contracts_MultiCallDeploy_abi.json`);
     const multiCallDeployJSON = JSON.parse(multiCallDeployJsonRaw);
     const MultiCall = new ethers.ContractFactory(multiCallDeployJSON.abi, multiCallDeployJSON.bytecode, owner);
     const multiCall = await MultiCall.deploy(owner.address, executor.address)
     await multiCall.deployed()
+    console.log(`Multi Call deployed at ${multiCall.address}`)
 
     const deployerRole = await factory.DEPLOYER_ROLE()
+    console.log(`Granting DEPLOYER_ROLE to Multi Call...`)
     const roleTx = await factory.connect(owner).grantRole(deployerRole, multiCall.address)
     await roleTx.wait()
+    console.log(`DEPLOYER_ROLE granted to Multi Call`)
 
+    console.log(`Deploying ERC20 Token...`)
     const erc20MockJsonRaw = fs.readFileSync(`${contractPath}/../contracts/artifacts/contracts_ERC20Mock_abi.json`);
     const erc20MockJSON = JSON.parse(erc20MockJsonRaw);
     const Token = new ethers.ContractFactory(erc20MockJSON.abi, erc20MockJSON.bytecode, owner);
     const token = await Token.connect(owner).deploy()
     await token.deployed()
+    console.log(`ERC20 Token deployed at ${token.address}`)
 
     const owner_a = new ethers.Wallet(ethers.utils.randomBytes(32))
     const salt = encodeImageHash(1, [{ weight: 1, address: owner_a.address }])
@@ -184,8 +194,10 @@ async function setupERC20FactoryFixture() {
     const cfa = addressOf(factory.address, mainModule.address, salt)
 
     // Transfer tokens to CFA
+    console.log(`Transfering tokens to CFA...`)
     const transferTx = await token.connect(owner).transfer(cfa, ethers.utils.parseEther('5'))
     await transferTx.wait()
+    console.log(`Tokens transfered to CFA`)
 
     return {
         owner_a,
@@ -218,33 +230,43 @@ async function setupERC721FactoryFixture() {
     const optimalGasLimit = ethers.constants.Two.pow(21)
 
     // Contracts are deployed using the first signer/account by default
+    console.log(`Deploying Wallet Factory...`)
     const walletJsonRaw = fs.readFileSync(`${contractPath}/../contracts/artifacts/contracts_Factory_abi.json`);
     const walletcontractJSON = JSON.parse(walletJsonRaw);
     const WalletFactory = new ethers.ContractFactory(walletcontractJSON.abi, walletcontractJSON.bytecode, owner);
     const factory = await WalletFactory.deploy(owner.address, await owner.getAddress());
     await factory.deployed();
+    console.log(`Wallet Factory deployed at ${factory.address}`)
 
+    console.log(`Deploying Main Module...`)
     const mainModuleJsonRaw = fs.readFileSync(`${contractPath}/../contracts/artifacts/contracts_MainModule_abi.json`);
     const mainModuleJSON = JSON.parse(mainModuleJsonRaw);
     const MainModule = new ethers.ContractFactory(mainModuleJSON.abi, mainModuleJSON.bytecode, owner);
     const mainModule = await MainModule.deploy(factory.address)
     await mainModule.deployed()
+    console.log(`Main Module deployed at ${mainModule.address}`)
 
+    console.log(`Deploying Multi Call...`)
     const multiCallDeployJsonRaw = fs.readFileSync(`${contractPath}/../contracts/artifacts/contracts_MultiCallDeploy_abi.json`);
     const multiCallDeployJSON = JSON.parse(multiCallDeployJsonRaw);
     const MultiCall = new ethers.ContractFactory(multiCallDeployJSON.abi, multiCallDeployJSON.bytecode, owner);
     const multiCall = await MultiCall.deploy(owner.address, executor.address)
     await multiCall.deployed()
+    console.log(`Multi Call deployed at ${multiCall.address}`)
 
     const deployerRole = await factory.DEPLOYER_ROLE()
+    console.log(`Granting DEPLOYER_ROLE to Multi Call...`)
     const roleTx = await factory.connect(owner).grantRole(deployerRole, multiCall.address)
     await roleTx.wait()
+    console.log(`DEPLOYER_ROLE granted to Multi Call`)
 
+    console.log(`Deploying ERC721 Token...`)
     const erc721MockJsonRaw = fs.readFileSync(`${contractPath}/../contracts/artifacts/contracts_ERC721Mock_abi.json`);
     const erc721MockJSON = JSON.parse(erc721MockJsonRaw);
     const Token = new ethers.ContractFactory(erc721MockJSON.abi, erc721MockJSON.bytecode, owner);
     const token = await Token.connect(owner).deploy()
     await token.deployed()
+    console.log(`ERC721 Token deployed at ${token.address}`)
 
     const owner_a = new ethers.Wallet(ethers.utils.randomBytes(32))
     const salt = encodeImageHash(1, [{ weight: 1, address: owner_a.address }])
@@ -253,8 +275,10 @@ async function setupERC721FactoryFixture() {
     const cfa = addressOf(factory.address, mainModule.address, salt)
 
     // Transfer tokens to CFA
+    console.log(`Transfering tokens to CFA...`)
     const transferTx = await token.connect(owner).mint(cfa, ethers.utils.parseEther('5'))
     await transferTx.wait()
+    console.log(`Tokens transfered to CFA`)
 
 
     return {
